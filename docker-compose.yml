@@ -1,0 +1,44 @@
+version: '3'
+services:
+  database:
+    image: 'mongo'
+    container_name: voting-session-mongo
+    environment:
+      - MONGO_INITDB_DATABASE=vote-session
+    volumes:
+      - ./init-mongo.js:/docker-entrypomonint-initdb.d/init-mongo.js:ro
+      - ./mongo-volume:/data/db
+    ports:
+      - 27017-27019:27017-27019
+    networks:
+      - local-network
+  rabbitmq:
+    image: 'rabbitmq:3.8.6-management'
+    container_name: voting-session-rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+    expose:
+      - 15672
+      - 5672
+    networks:
+      - local-network
+  voting:
+    ports:
+      - 8080:8080
+    depends_on:
+      - rabbitmq
+      - database
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voting-session-service
+    environment:
+      MONGO_HOST: database
+      RABBIT_HOST: rabbitmq
+    networks:
+      - local-network
+
+networks:
+  local-network:
+    driver: bridge
